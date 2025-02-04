@@ -1,3 +1,5 @@
+import { createSlice } from "@reduxjs/toolkit"
+
 const anecdotesAtStart = [
   'If it hurts, do it more often',
   'Adding manpower to a late software project makes it later!',
@@ -19,38 +21,23 @@ const asObject = (anecdote) => {
 
 const initialState = anecdotesAtStart.map(asObject)
 
-const reducer = (state = initialState, action) => {
-  switch(action.type) {
-    case 'VOTE': {
-      const id = action.payload.id
-      const anecdoteToChange = state.find(anecdote => anecdote.id === id)
-      const changedAnecdote = {
-        ...anecdoteToChange,
-        votes: anecdoteToChange.votes + 1
-      }
-      return state.map(anecdote => anecdote.id !== id ? anecdote : changedAnecdote)
-    }
-    case 'NEW_ANECDOTE': {      
-      const newAnecdote = asObject(action.payload.content)
+const anecdoteSlice = createSlice({
+  name: 'anecdotes',
+  initialState,
+  reducers: {
+    createAnecdote: (state, action) => {
+      const newAnecdote = asObject(action.payload)
       return state.concat(newAnecdote)
+    },
+    addVote: (state, action) => {
+      const id = action.payload
+      //console.log('state', JSON.parse(JSON.stringify(state)))
+      const anecdoteToChange = state.find(anecdote => anecdote.id === id)
+      anecdoteToChange.votes++ // state can be changed because rtk uses Immer library
     }
-      default: 
-        return state
   }
-}
+})
 
-export const createAnecdote = (content) => {
-  return {
-    type: 'NEW_ANECDOTE',
-    payload: { content }
-  }
-}
 
-export const addVote = (id) => {
-  return {
-    type: 'VOTE',
-    payload: { id }
-  }
-} 
-
-export default reducer
+export const {addVote, createAnecdote} = anecdoteSlice.actions
+export default anecdoteSlice.reducer
