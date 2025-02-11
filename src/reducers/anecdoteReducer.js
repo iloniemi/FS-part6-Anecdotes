@@ -1,4 +1,5 @@
-import { createSlice } from "@reduxjs/toolkit"
+import { createSlice } from '@reduxjs/toolkit'
+import anecdoteService from '../services/anecdotes'
 
 const anecdotesAtStart = [
   'If it hurts, do it more often',
@@ -23,21 +24,50 @@ const initialState = anecdotesAtStart.map(asObject)
 
 const anecdoteSlice = createSlice({
   name: 'anecdotes',
-  initialState,
+  initialState: [],
   reducers: {
-    createAnecdote: (state, action) => {
-      const newAnecdote = asObject(action.payload)
-      return state.concat(newAnecdote)
+    appendAnecdote: (state, action) => {
+      return state.concat(action.payload)
     },
     addVote: (state, action) => {
       const id = action.payload
       //console.log('state', JSON.parse(JSON.stringify(state)))
       const anecdoteToChange = state.find(anecdote => anecdote.id === id)
       anecdoteToChange.votes++ // state can be changed because rtk uses Immer library
-    }
+    },
+    setAnecdotes: (state, action) => {
+      return action.payload
+    },
+
   }
 })
 
 
-export const {addVote, createAnecdote} = anecdoteSlice.actions
+export const {addVote, appendAnecdote, setAnecdotes} = anecdoteSlice.actions
+
+export const initializeAnecdotes = () => {
+  return async dispatch => {
+    const anecdotes = await anecdoteService.getAll()
+    dispatch(setAnecdotes(anecdotes))
+  }
+}
+
+export const createAnecdote = (content) => {
+  return async dispatch => {
+    const newAnecdote = await anecdoteService.createNew(content)
+    dispatch(appendAnecdote(newAnecdote))
+  }
+}
+
+export const sendVote = (anecdote) => {
+  return async (dispatch) => {
+    const changedAnecdote = {
+      ...anecdote,
+      votes: anecdote.votes+1
+    }
+    await anecdoteService.update(changedAnecdote)
+    dispatch(addVote(anecdote.id))
+  }
+}
+
 export default anecdoteSlice.reducer
